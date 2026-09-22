@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
 import { Filter, RefreshCw, Search } from "lucide-react";
 import { Link } from "react-router-dom";
+
 import { getCategories, getComplaints } from "../../api";
 import { LoadingInline } from "../../components/common/Loading";
 import EmptyState from "../../components/common/EmptyState";
 import ErrorState from "../../components/common/ErrorState";
-import { PriorityBadge, StatusBadge, formatLabel } from "../../components/common/Badge";
+import {
+  PriorityBadge,
+  StatusBadge,
+  formatLabel,
+} from "../../components/common/Badge";
 import { formatDate, getId, truncate } from "../../utils/formatters";
 
 const STATUS = ["pending", "in_progress", "resolved", "rejected"];
@@ -21,6 +26,7 @@ export default function ComplaintsPage() {
 
   const [complaints, setComplaints] = useState([]);
   const [categories, setCategories] = useState([]);
+
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -36,6 +42,7 @@ export default function ComplaintsPage() {
 
     try {
       const response = await getComplaints(nextFilters);
+
       const data = response.data?.data || response.data || {};
 
       const items =
@@ -46,7 +53,8 @@ export default function ComplaintsPage() {
 
       const meta = data.pagination || {};
 
-      setComplaints(items);
+      setComplaints(Array.isArray(items) ? items : []);
+
       setPagination({
         total: meta.total ?? data.total ?? items.length,
         page: meta.page ?? nextFilters.page,
@@ -66,15 +74,37 @@ export default function ComplaintsPage() {
   async function loadCategories() {
     try {
       const response = await getCategories();
-      const data =
-        response.data?.data ||
-        response.data?.categories ||
-        response.data ||
-        [];
 
-      setCategories(Array.isArray(data) ? data : Object.keys(data));
-    } catch {
-      // Category endpoint failure should not prevent the complaint table.
+      /*
+       * Handle possible backend response formats:
+       *
+       * ["electricity", "internet", "hostel"]
+       *
+       * { categories: ["electricity", "internet"] }
+       *
+       * { data: ["electricity", "internet"] }
+       *
+       * { data: { categories: [...] } }
+       */
+
+      let data = response.data;
+
+      if (data?.data !== undefined) {
+        data = data.data;
+      }
+
+      if (data?.categories !== undefined) {
+        data = data.categories;
+      }
+
+      if (!Array.isArray(data)) {
+        data = [];
+      }
+
+      setCategories(data);
+    } catch (err) {
+      console.error("Failed to load categories:", err);
+      setCategories([]);
     }
   }
 
@@ -116,9 +146,11 @@ export default function ComplaintsPage() {
           <p className="text-[10px] font-bold tracking-[0.18em] text-slate-600">
             OPERATIONS
           </p>
+
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-white">
             Complaint queue
           </h1>
+
           <p className="mt-2 text-sm text-slate-500">
             Review, assign and resolve complaints submitted by students.
           </p>
@@ -145,6 +177,7 @@ export default function ComplaintsPage() {
           className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5 text-xs text-slate-300 outline-none focus:border-indigo-500"
         >
           <option value="">All statuses</option>
+
           {STATUS.map((status) => (
             <option key={status} value={status}>
               {formatLabel(status)}
@@ -158,12 +191,32 @@ export default function ComplaintsPage() {
           className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5 text-xs text-slate-300 outline-none focus:border-indigo-500"
         >
           <option value="">All categories</option>
-          {categories.map((category) => {
-            const value =
-              typeof category === "string" ? category : category.name;
+
+          {categories.map((category, index) => {
+            /*
+             * Support both strings and category objects.
+             */
+
+            let value;
+
+            if (typeof category === "string") {
+              value = category;
+            } else if (category && typeof category === "object") {
+              value =
+                category.value ??
+                category.key ??
+                category.slug ??
+                category.name ??
+                category.category ??
+                category.id;
+            }
+
+            if (!value) {
+              return null;
+            }
 
             return (
-              <option key={value} value={value}>
+              <option key={`${value}-${index}`} value={value}>
                 {formatLabel(value)}
               </option>
             );
@@ -186,9 +239,13 @@ export default function ComplaintsPage() {
         <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60">
           <div className="flex items-center justify-between border-b border-slate-800 p-5">
             <div>
-              <h2 className="text-sm font-bold text-white">All complaints</h2>
+              <h2 className="text-sm font-bold text-white">
+                All complaints
+              </h2>
+
               <p className="mt-1 text-xs text-slate-600">
-                {pagination.total} record{pagination.total === 1 ? "" : "s"}
+                {pagination.total} record
+                {pagination.total === 1 ? "" : "s"}
               </p>
             </div>
 
@@ -228,8 +285,11 @@ export default function ComplaintsPage() {
                           <td className="px-5 py-4">
                             <div className="min-w-56">
                               <p className="text-xs font-bold text-slate-200">
-                                {complaint.complaintNumber || id || "Unknown"}
+                                {complaint.complaintNumber ||
+                                  id ||
+                                  "Unknown"}
                               </p>
+
                               <p className="mt-1 text-[10px] text-slate-600">
                                 {truncate(complaint.description)}
                               </p>

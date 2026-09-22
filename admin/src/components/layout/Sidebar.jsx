@@ -38,7 +38,7 @@ export default function Sidebar({ open, onClose }) {
         </div>
 
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-white">Campus CMS</p>
+          <p className="truncate text-sm font-bold text-white">Hello क्याम्पस</p>
           <p className="text-xs text-slate-500">Admin Panel</p>
         </div>
 
