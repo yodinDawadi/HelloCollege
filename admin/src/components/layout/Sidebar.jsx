@@ -34,7 +34,7 @@ export default function Sidebar({ open, onClose }) {
     >
       <div className="flex h-20 items-center gap-3 border-b border-slate-800 px-5">
         <div className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-950">
-          <ShieldCheck size={21} />
+          <img src="/logo.svg" alt="logo"/>
         </div>
 
         <div className="min-w-0">

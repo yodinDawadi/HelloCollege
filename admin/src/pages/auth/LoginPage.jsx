@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { LoaderCircle, ShieldCheck } from "lucide-react";
+import logo from "/logo.svg"
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
@@ -32,7 +33,7 @@ export default function LoginPage() {
     <main className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_50%_0%,#1e293b,transparent_40%)] bg-slate-950 p-4">
       <section className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-900/90 p-7 shadow-2xl shadow-black/40 sm:p-9">
         <div className="mb-6 grid h-12 w-12 place-items-center rounded-2xl bg-indigo-600 text-white shadow-xl shadow-indigo-950">
-          <ShieldCheck size={25} />
+          <img src="/logo.svg" alt="logo"/>
         </div>
 
         <p className="text-[10px] font-bold tracking-[0.18em] text-slate-600">
